@@ -1,0 +1,143 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider             = "prisma-client-py"
+  interface            = "asyncio"
+  recursive_type_depth = 5
+}
+
+// -----------------------------------------------------------------------------
+// MODELS
+// -----------------------------------------------------------------------------
+
+model User {
+  // Este ID deve ser o exato mesmo UUID gerado pelo Supabase no momento do cadastro
+  id           String    @id @map("user_id") @db.Uuid 
+  name         String
+  email        String    @unique
+  phone        String?
+  region       String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  properties   Property[]
+
+  @@map("users")
+}
+
+model Property {
+  id           String    @id @default(uuid()) @map("property_id") @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  name         String
+  state        String
+  municipality String
+  soilType     String?   @map("soil_type")
+  soilTexture  String?   @map("soil_texture")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  crops        Crop[]
+
+  @@unique([userId, name])
+  @@map("properties")
+}
+
+model ClimateData {
+  id                          String   @id @default(uuid()) @map("climate_data_id") @db.Uuid
+  municipality                String
+  state                       String
+  referenceMonth              Int      @map("reference_month")
+  referenceYear               Int      @map("reference_year")
+  latitude                    Float?
+  longitude                   Float?
+  temperatureMinAnnual        Float?   @map("temperature_min_annual")
+  temperatureMaxAnnual        Float?   @map("temperature_max_annual")
+  temperatureAvgAnnual        Float?   @map("temperature_avg_annual")
+  rainfallAnnualMm            Float?   @map("rainfall_annual_mm")
+  rainfallMonthly             Json     @map("rainfall_monthly")
+  humidityAvg                 Float?   @map("humidity_avg")
+  et0Annual                   Float?   @map("et0_annual")
+  humidityMonthly             Json     @map("humidity_monthly")
+  windSpeedAvg                Float?   @map("wind_speed_avg")
+  solarRadiationAvg           Float?   @map("solar_radiation_avg")
+  koppenClimateClassification String?  @map("koppen_climate_classification")
+  source                      String
+  sourceUrl                   String?  @map("source_url")
+  lastFetchedAt               DateTime @map("last_fetched_at")
+  dataYearRange               String?  @map("data_year_range")
+  createdAt                   DateTime @default(now()) @map("created_at")
+  updatedAt                   DateTime @updatedAt @map("updated_at")
+
+  @@unique([municipality, state, referenceMonth, referenceYear])
+  @@map("climate_data")
+}
+
+model Crop {
+  id                     String    @id @default(uuid()) @map("crop_id") @db.Uuid
+  propertyId             String    @map("property_id") @db.Uuid
+  name                   String
+  cropType               String    @map("crop_type")
+  plantingDate           DateTime  @map("planting_date") @db.Date
+  areaPlantedHectares    Float?    @map("area_planted_hectares")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+
+  property               Property                @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  irrigationSystem       IrrigationSystem?
+  irrigationCalculations IrrigationCalculation[]
+
+  @@map("crops")
+}
+
+model IrrigationSystem {
+  id                       String    @id @default(uuid()) @map("irrigation_system_id") @db.Uuid
+  cropId                   String    @unique @map("crop_id") @db.Uuid
+  systemType               String    @map("system_type")
+  wettingFraction          Float     @map("wetting_fraction")
+  applicationEfficiency    Float     @map("application_efficiency")
+  uniformityCoefficient    Float?    @map("uniformity_coefficient")
+  spacingBetweenRowsM      Float?    @map("spacing_between_rows_m")
+  flowRateLitersPerHour    Float?    @map("flow_rate_liters_per_hour")
+  numberOfEmitters         Int?      @map("number_of_emitters")
+  irrigationDepthMm        Float?    @map("irrigation_depth_mm")
+  createdAt                DateTime  @default(now()) @map("created_at")
+  updatedAt                DateTime  @updatedAt @map("updated_at")
+
+  crop                     Crop      @relation(fields: [cropId], references: [id], onDelete: Cascade)
+
+  @@map("irrigation_systems")
+}
+
+model IrrigationCalculation {
+  id                       String    @id @default(uuid()) @map("calculation_id") @db.Uuid
+  cropId                   String    @map("crop_id") @db.Uuid
+  calculatedAt             DateTime  @default(now()) @map("calculated_at")
+  notes                    String?
+
+  // Snapshots
+  climateSnapshot          Json      @map("climate_snapshot")
+  cropDataSnapshot         Json      @map("crop_data_snapshot")
+  irrigationSystemSnapshot Json      @map("irrigation_system_snapshot")
+
+  // Calculated Outputs
+  etoMm                    Float     @map("eto_mm")
+  kc                       Float
+  etcropMm                 Float     @map("etcrop_mm")
+  rainfallExpectedMm       Float     @map("rainfall_expected_mm")
+  soilWaterDeficitMm       Float     @map("soil_water_deficit_mm")
+  laminaLiquidaMm          Float     @map("lamina_liquida_mm")
+  laminaBrutaMm            Float     @map("lamina_bruta_mm")
+  irrigationIntervalDays   Int       @map("irrigation_interval_days")
+  tempoIrrigacaoHours      Float     @map("tempo_irrigacao_hours")
+  volumeTotalLiters        Float     @map("volume_total_liters")
+  recommendation           String
+
+  crop                     Crop      @relation(fields: [cropId], references: [id], onDelete: Cascade)
+
+  @@index([cropId, calculatedAt(sort: Desc)])
+  @@map("irrigation_calculations")
+}
