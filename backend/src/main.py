@@ -6,8 +6,8 @@ from src.core.config import settings
 from src.core.database import connect_db, disconnect_db
 
 # TODO: Import your module routers here as you build them
-# from src.modules.properties.router import router as properties_router
-# from src.modules.crops.router import router as crops_router
+from src.modules.properties.router import router as properties_router
+from src.modules.crops.router import router as crops_router
 # from src.modules.irrigation.router import router as irrigation_router
 
 
@@ -38,8 +38,8 @@ app.add_middleware(
 
 
 # TODO: Include your routers
-# app.include_router(properties_router, prefix="/api/v1")
-# app.include_router(crops_router, prefix="/api/v1")
+app.include_router(properties_router, prefix="/api/v1")
+app.include_router(crops_router, prefix="/api/v1")
 # app.include_router(irrigation_router, prefix="/api/v1")
 
 

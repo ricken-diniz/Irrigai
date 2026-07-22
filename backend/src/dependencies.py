@@ -21,8 +21,10 @@ def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(secu
             token,
             signing_key.key,
             algorithms=["ES256", "RS256", "HS256"],
-            options={"verify_aud": False},
-            issuer=f"{settings.SUPABASE_URL}/auth/v1",
+            options={
+                "verify_aud": False,
+                "verify_iss": False
+                },
         )
 
         user_id: str = payload.get("sub")
@@ -31,7 +33,8 @@ def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(secu
 
         return user_id
 
-    except PyJWTError:
+    except PyJWTError as e:
+        print(f"JWT Validation Error: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials or invalid token.",
