@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, status
-from prisma import Prisma
 from src.dependencies import get_current_user_id
 from src.core.database import prisma
 from src.modules.properties.repository import PropertyRepository

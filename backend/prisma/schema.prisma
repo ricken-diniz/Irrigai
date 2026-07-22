@@ -114,16 +114,14 @@ model IrrigationSystem {
 
 model IrrigationCalculation {
   id                       String    @id @default(uuid()) @map("calculation_id") @db.Uuid
-  cropId                   String    @map("crop_id") @db.Uuid
+  cropId                   String?   @map("crop_id") @db.Uuid   // agora opcional
   calculatedAt             DateTime  @default(now()) @map("calculated_at")
   notes                    String?
 
-  // Snapshots
   climateSnapshot          Json      @map("climate_snapshot")
   cropDataSnapshot         Json      @map("crop_data_snapshot")
   irrigationSystemSnapshot Json      @map("irrigation_system_snapshot")
 
-  // Calculated Outputs
   etoMm                    Float     @map("eto_mm")
   kc                       Float
   etcropMm                 Float     @map("etcrop_mm")
@@ -135,9 +133,17 @@ model IrrigationCalculation {
   tempoIrrigacaoHours      Float     @map("tempo_irrigacao_hours")
   volumeTotalLiters        Float     @map("volume_total_liters")
   recommendation           String
+  status                   CalculationStatus @default(latest)
 
-  crop                     Crop      @relation(fields: [cropId], references: [id], onDelete: Cascade)
+  crop                     Crop?     @relation(fields: [cropId], references: [id], onDelete: SetNull)  // era Cascade
 
+  @@index([cropId, status])
   @@index([cropId, calculatedAt(sort: Desc)])
   @@map("irrigation_calculations")
+}
+
+enum CalculationStatus {
+  latest
+  historical
+  @@map("calculation_status")
 }

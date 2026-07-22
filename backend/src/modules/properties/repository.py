@@ -8,37 +8,35 @@ class PropertyRepository:
         self.db = db
 
     async def create(self, user_id: str, data: dict) -> Property:
-        return await self.db.property.create(data={**data, "user_id": user_id})
+        return await self.db.property.create(data={**data, "userId": user_id})
 
     async def get_by_id(self, property_id: str, user_id: str) -> Optional[Property]:
         return await self.db.property.find_first(
-            where={"property_id": property_id, "user_id": user_id, "deleted_at": None}
+            where={"id": property_id, "userId": user_id}
         )
 
     async def list_by_user(self, user_id: str) -> list[Property]:
         return await self.db.property.find_many(
-            where={"user_id": user_id, "deleted_at": None},
-            order={"created_at": "desc"},
+            where={"userId": user_id},
+            order={"createdAt": "desc"},
         )
 
     async def exists_by_name(self, user_id: str, name: str) -> bool:
         found = await self.db.property.find_first(
-            where={"user_id": user_id, "name": name, "deleted_at": None}
+            where={"userId": user_id, "name": name}
         )
         return found is not None
 
     async def update(self, property_id: str, user_id: str, data: dict) -> Optional[Property]:
         result = await self.db.property.update_many(
-            where={"property_id": property_id, "user_id": user_id}, data=data
+            where={"id": property_id, "userId": user_id}, data=data
         )
         if result == 0:
             return None
         return await self.get_by_id(property_id, user_id)
 
-    async def soft_delete(self, property_id: str, user_id: str) -> bool:
-        from datetime import datetime, timezone
-        result = await self.db.property.update_many(
-            where={"property_id": property_id, "user_id": user_id},
-            data={"deleted_at": datetime.now(timezone.utc)},
+    async def delete(self, property_id: str, user_id: str) -> bool:
+        result = await self.db.property.delete_many(
+            where={"id": property_id, "userId": user_id}
         )
         return result > 0
