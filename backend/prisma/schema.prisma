@@ -90,6 +90,7 @@ model Crop {
   irrigationSystem       IrrigationSystem?
   irrigationCalculations IrrigationCalculation[]
 
+  @@unique([propertyId, name])
   @@map("crops")
 }
 
