@@ -1,4 +1,5 @@
 from typing import Optional
+
 from prisma import Prisma
 from prisma.models import Crop
 
@@ -7,17 +8,129 @@ class CropRepository:
     def __init__(self, db: Prisma):
         self.db = db
 
-    async def create(self, data: dict) -> Crop:
-        return await self.db.crop.create(data=data)
-
-    async def get_by_id_with_property(self, crop_id: str) -> Optional[Crop]:
-        return await self.db.crop.find_first(
-            where={"crop_id": crop_id, "deleted_at": None},
-            include={"property": True},
+    async def create(
+        self,
+        property_id: str,
+        user_id: str,
+        data: dict,
+    ) -> Optional[Crop]:
+        property_exists = await self.db.property.find_first(
+            where={
+                "id": property_id,
+                "userId": user_id,
+            }
         )
 
-    async def list_by_property(self, property_id: str) -> list[Crop]:
+        if property_exists is None:
+            return None
+
+        return await self.db.crop.create(
+            data={
+                **data,
+                "propertyId": property_id,
+            }
+        )
+
+    async def get_by_id(
+        self,
+        crop_id: str,
+        user_id: str,
+    ) -> Optional[Crop]:
+        return await self.db.crop.find_first(
+            where={
+                "id": crop_id,
+                "property": {
+                    "userId": user_id,
+                },
+            },
+            include={
+                "property": True,
+                "irrigationSystem": True,
+            },
+        )
+
+    async def list_by_property(
+        self,
+        property_id: str,
+        user_id: str,
+    ) -> list[Crop]:
         return await self.db.crop.find_many(
-            where={"property_id": property_id, "deleted_at": None},
-            order={"planting_date": "desc"},
+            where={
+                "propertyId": property_id,
+                "property": {
+                    "userId": user_id,
+                },
+            },
+            order={
+                "plantingDate": "desc",
+            },
+        )
+
+    async def exists_by_name(
+        self,
+        property_id: str,
+        user_id: str,
+        name: str,
+    ) -> bool:
+        crop = await self.db.crop.find_first(
+            where={
+                "propertyId": property_id,
+                "name": name,
+                "property": {
+                    "userId": user_id,
+                },
+            }
+        )
+
+        return crop is not None
+
+    async def update(
+        self,
+        crop_id: str,
+        user_id: str,
+        data: dict,
+    ) -> Optional[Crop]:
+        result = await self.db.crop.update_many(
+            where={
+                "id": crop_id,
+                "property": {
+                    "userId": user_id,
+                },
+            },
+            data=data,
+        )
+
+        if result == 0:
+            return None
+
+        return await self.get_by_id(crop_id, user_id)
+
+    async def delete(
+        self,
+        crop_id: str,
+        user_id: str,
+    ) -> bool:
+        result = await self.db.crop.delete_many(
+            where={
+                "id": crop_id,
+                "property": {
+                    "userId": user_id,
+                },
+            }
+        )
+
+        return result > 0
+
+    async def count_by_property(
+        self,
+        property_id: str,
+        user_id: str,
+    ) -> int:
+        return await self.db.crop.count(
+            where={
+                "propertyId": property_id,
+                "property": {
+                    "userId": user_id,
+                },
+            }
         )
