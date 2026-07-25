@@ -16,6 +16,9 @@ from src.modules.crops.service import CropService
 from src.modules.properties.repository import PropertyRepository
 from src.modules.properties.service import PropertyService
 
+from src.modules.calculation.repository import CalculationRepository
+from src.modules.calculation.service import CalculationService
+
 
 router = APIRouter(
     prefix="/crops",
@@ -25,7 +28,8 @@ router = APIRouter(
 
 def get_crop_service() -> CropService:
     property_service = PropertyService(PropertyRepository(prisma))
-    return CropService(CropRepository(prisma), property_service)
+    calculation_service = CalculationService(CalculationRepository(prisma))
+    return CropService(CropRepository(prisma), property_service, calculation_service)
 
 
 @router.post("", response_model=CropRead, status_code=status.HTTP_201_CREATED)
@@ -77,3 +81,14 @@ async def delete_crop(
 ):
     await service.delete_crop(str(crop_id), str(user_id))
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@router.get("/{crop_id}/calculation") # TODO: add response model
+async def get_crop_calculation(
+    crop_id: UUID,
+    user_id: UUID = Depends(get_current_user_id),
+    service: CropService = Depends(get_crop_service),
+):
+    return await service.get_crop_calculation(
+        str(crop_id),
+        str(user_id),
+    )

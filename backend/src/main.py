@@ -8,7 +8,7 @@ from src.core.database import connect_db, disconnect_db
 # TODO: Import your module routers here as you build them
 from src.modules.properties.router import router as properties_router
 from src.modules.crops.router import router as crops_router
-# from src.modules.irrigation.router import router as irrigation_router
+from src.modules.calculation.router import router as calculation_router
 
 
 @asynccontextmanager
@@ -30,7 +30,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,  # lista explícita, ex: ["https://app.irrigai.com"]
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
     allow_headers=["Authorization", "Content-Type"],
@@ -40,7 +40,7 @@ app.add_middleware(
 # TODO: Include your routers
 app.include_router(properties_router, prefix="/api/v1")
 app.include_router(crops_router, prefix="/api/v1")
-# app.include_router(irrigation_router, prefix="/api/v1")
+app.include_router(calculation_router, prefix="/api/v1")
 
 
 @app.get("/health", tags=["System"])

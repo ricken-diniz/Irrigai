@@ -2,13 +2,15 @@ from datetime import UTC, datetime
 from fastapi import HTTPException, status
 from src.modules.crops.repository import CropRepository
 from src.modules.properties.service import PropertyService
+from src.modules.calculation.schemas import CalculationCreate
+from src.modules.calculation.service import CalculationService
 from src.modules.crops.schemas import CropCreate, CropUpdate
 
-# TODO: Validar
 class CropService:
-    def __init__(self, repository: CropRepository, property_service: PropertyService):
+    def __init__(self, repository: CropRepository, property_service: PropertyService, calculation_service: CalculationService):
         self.repository = repository
         self.property_service = property_service
+        self.calculation_service = calculation_service
 
     async def create_crop(self, user_id: str, payload: CropCreate):
         await self.property_service.get_property_or_404(str(payload.property_id), user_id)
@@ -67,3 +69,23 @@ class CropService:
     async def count_crops(self, property_id: str, user_id: str) -> int:
         await self.property_service.get_property_or_404(property_id, user_id)
         return await self.repository.count_by_property(property_id, user_id)
+
+    async def get_crop_calculation(self, crop_id: str, user_id: str):
+        crop = await self.get_crop_or_404(crop_id, user_id)
+
+        property = await self.property_service.get_property_or_404(
+            crop.property_id,
+            user_id,
+        )
+
+        payload = CalculationCreate(
+            crop_id=crop.id,
+            municipality=property.municipality,
+            state=property.state,
+            crop_type=crop.crop_type,
+            planting_date=crop.planting_date,
+            area_planted_hectares=crop.area_planted_hectares,
+            irrigation_system=crop.irrigation_system_type,
+        )
+
+        return await self.calculation_service.get_today(payload)
