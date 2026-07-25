@@ -70,7 +70,7 @@ class CropService:
         await self.property_service.get_property_or_404(property_id, user_id)
         return await self.repository.count_by_property(property_id, user_id)
 
-    async def get_crop_calculation(self, crop_id: str, user_id: str):
+    async def get_crop_calculation(self, crop_id: str, user_id: str): # TODO: add returns
         crop = await self.get_crop_or_404(crop_id, user_id)
 
         property = await self.property_service.get_property_or_404(
