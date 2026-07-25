@@ -1,4 +1,5 @@
 from functools import lru_cache
+from uuid import UUID
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
@@ -11,7 +12,7 @@ security = HTTPBearer()
 def get_jwks_client() -> PyJWKClient:
     return PyJWKClient(f"{settings.SUPABASE_URL}/auth/v1/.well-known/jwks.json")
 
-def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
+def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(security)) -> UUID:
     token = credentials.credentials
     try:
         jwks_client = get_jwks_client()

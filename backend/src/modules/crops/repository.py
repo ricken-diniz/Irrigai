@@ -17,7 +17,7 @@ class CropRepository:
         property_exists = await self.db.property.find_first(
             where={
                 "id": property_id,
-                "userId": user_id,
+                "user_id": user_id,
             }
         )
 
@@ -27,7 +27,7 @@ class CropRepository:
         return await self.db.crop.create(
             data={
                 **data,
-                "propertyId": property_id,
+                "property_id": property_id,
             }
         )
 
@@ -40,12 +40,11 @@ class CropRepository:
             where={
                 "id": crop_id,
                 "property": {
-                    "userId": user_id,
+                    "user_id": user_id,
                 },
             },
             include={
-                "property": True,
-                "irrigationSystem": True,
+                "property": True
             },
         )
 
@@ -56,13 +55,13 @@ class CropRepository:
     ) -> list[Crop]:
         return await self.db.crop.find_many(
             where={
-                "propertyId": property_id,
+                "property_id": property_id,
                 "property": {
-                    "userId": user_id,
+                    "user_id": user_id,
                 },
             },
             order={
-                "plantingDate": "desc",
+                "planting_date": "desc",
             },
         )
 
@@ -74,10 +73,10 @@ class CropRepository:
     ) -> bool:
         crop = await self.db.crop.find_first(
             where={
-                "propertyId": property_id,
+                "property_id": property_id,
                 "name": name,
                 "property": {
-                    "userId": user_id,
+                    "user_id": user_id,
                 },
             }
         )
@@ -94,7 +93,7 @@ class CropRepository:
             where={
                 "id": crop_id,
                 "property": {
-                    "userId": user_id,
+                    "user_id": user_id,
                 },
             },
             data=data,
@@ -114,7 +113,7 @@ class CropRepository:
             where={
                 "id": crop_id,
                 "property": {
-                    "userId": user_id,
+                    "user_id": user_id,
                 },
             }
         )
@@ -128,9 +127,9 @@ class CropRepository:
     ) -> int:
         return await self.db.crop.count(
             where={
-                "propertyId": property_id,
+                "property_id": property_id,
                 "property": {
-                    "userId": user_id,
+                    "user_id": user_id,
                 },
             }
         )
