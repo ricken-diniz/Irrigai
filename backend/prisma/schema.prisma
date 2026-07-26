@@ -27,8 +27,9 @@ model Property {
   id            String    @id @default(uuid()) @map("property_id") @db.Uuid
   user_id       String    @map("user_id") @db.Uuid
   name          String
-  state         String
-  municipality  String
+  h3_token                       String   @db.VarChar(15)
+  latitude                       Float?
+  longitude                      Float?
   created_at    DateTime  @default(now()) @map("created_at")
   updated_at    DateTime  @updatedAt @map("updated_at")
 
@@ -45,6 +46,7 @@ model Crop {
   name                      String
   crop_type                 String    @map("crop_type")
   irrigation_system_type    String    @map("irrigation_system_type")
+  irrigation_turn           Int               @map("irrigation_turn")
   planting_date             DateTime  @map("planting_date") @db.Date
   area_planted_hectares     Float?    @map("area_planted_hectares")
   created_at                DateTime  @default(now()) @map("created_at")
@@ -59,9 +61,7 @@ model Crop {
 
 model ClimateData {
   id                             String   @id @default(uuid()) @map("climate_data_id") @db.Uuid
-  s2_token                      String   @db.VarChar(5) // token S2 nível 7 (~72km de aresta média por célula), cobre a escala de ~60km pedida
-  municipality                   String
-  state                          String
+  h3_token                       String   @db.VarChar(15)
   reference_month                Int      @map("reference_month")
   reference_year                 Int      @map("reference_year")
   latitude                       Float?
@@ -93,15 +93,14 @@ model ClimateData {
 
 model Calculation {
   id                        String            @id @default(uuid()) @map("calculation_id") @db.Uuid
+  h3_token                  String            @db.VarChar(15)
   calculated_at             DateTime          @default(now()) @map("calculated_at")
-  notes                     String?
   etcrop_mm                 Float             @map("etcrop_mm")
+  irrigation_turn           Int               @map("irrigation_turn")
   lamina_liquida_mm         Float             @map("lamina_liquida_mm")
   lamina_bruta_mm           Float             @map("lamina_bruta_mm")
   tempo_irrigacao_hours     Float             @map("tempo_irrigacao_hours")
   volume_total_liters       Float             @map("volume_total_liters")
-  recommendation            String
-  status                    CalculationStatus @default(latest)
 
   climate_data_id            String   @map("climate_data_id") @db.Uuid
   climate_data                ClimateData @relation(fields: [climate_data_id], references: [id], onDelete: Restrict)
@@ -109,14 +108,8 @@ model Calculation {
   crop_id                    String?  @map("crop_id") @db.Uuid
   crop                       Crop?    @relation(fields: [crop_id], references: [id], onDelete: SetNull)
 
-  @@index([crop_id, status])
   @@index([crop_id, calculated_at(sort: Desc)])
+  @@index([h3_token, calculated_at(sort: Desc)])
   @@index([climate_data_id])
   @@map("irrigation_calculations")
-}
-
-enum CalculationStatus {
-  latest
-  historical
-  @@map("calculation_status")
 }

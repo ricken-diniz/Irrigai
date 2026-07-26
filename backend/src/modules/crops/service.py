@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from fastapi import HTTPException, status
 from src.modules.crops.repository import CropRepository
 from src.modules.properties.service import PropertyService
-from src.modules.calculation.schemas import CalculationCreate
+from src.modules.calculation.schemas import CalculationInput
 from src.modules.calculation.service import CalculationService
 from src.modules.crops.schemas import CropCreate, CropUpdate
 
@@ -78,14 +78,14 @@ class CropService:
             user_id,
         )
 
-        payload = CalculationCreate(
+        payload = CalculationInput(
             crop_id=crop.id,
-            municipality=property.municipality,
-            state=property.state,
+            h3_token=property.h3_token,
             crop_type=crop.crop_type,
             planting_date=crop.planting_date,
             area_planted_hectares=crop.area_planted_hectares,
             irrigation_system=crop.irrigation_system_type,
+            irrigation_turn=crop.irrigatio_turn,
         )
 
         return await self.calculation_service.get_today(payload)

@@ -1,11 +1,12 @@
 from functools import lru_cache
+from typing import List
 from uuid import UUID
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 from jwt import PyJWTError, PyJWKClient
 from src.core.config import settings
-import s2sphere
+import h3
 
 security = HTTPBearer()
 
@@ -42,12 +43,20 @@ def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(secu
             detail="Invalid credentials or invalid token.",
         )
 
-def get_s2_token(lat: float, lon: float, scale: int = 7) -> str:
+def get_h3_token(lat: float, lon: float, scale: int = 4) -> str:
     """
-    Converts a coordinate into a Google S2 token at the specified level.
-    Level 7 generates an area of ​​~5,300 km² (average radius of ~36 km).
+    Converts a cordinate into h3 cell.
+    H3 is a discrete global grid system for indexing geographies into a hexagonal grid.
+    See more in: https://h3geo.org/
     """
-    cordinate = s2sphere.LatLng.from_degrees(lat, lon)
-    leaf_cell = s2sphere.CellId.from_lat_lng(cordinate)
-    target_cell = leaf_cell.parent(scale)
-    return target_cell.to_token()
+    return h3.latlng_to_cell(lat, lon, scale)
+
+def get_nearest_marked_cell(marked_cells: List[str], current_cell) -> str:
+    """
+    Returns the nearest cell from a list of marked_cells given a current_cell. 
+    """
+    distances = {
+        cell: h3.grid_distance(current_cell, cell) 
+        for cell in marked_cells
+    }
+    return min(distances, key=distances.get)
