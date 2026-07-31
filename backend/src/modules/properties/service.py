@@ -2,7 +2,11 @@ from fastapi import HTTPException, status
 from src.modules.properties.repository import PropertyRepository
 from src.modules.properties.schemas import PropertyCreate, PropertyUpdate
 
-VALID_STATES = {"PB", "PE", "CE", "RN", "BA", "SP", "MG"}  # TODO: completar com todos os estados
+VALID_STATES = {
+    "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
+    "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
+    "RS", "RO", "RR", "SC", "SP", "SE", "TO"
+}
 
 
 class PropertyService:
