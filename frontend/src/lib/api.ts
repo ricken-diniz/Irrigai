@@ -28,20 +28,19 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
 }
 
 // ── Types ──────────────────────────────────────────────────────────────────
+// Alinhados com os schemas Pydantic do backend (PropertyRead, CropRead, CalculationRead)
 
 export interface Property {
   id: string
   name: string
-  state: string
-  municipality: string
+  h3_token: string
   created_at: string
   updated_at: string
 }
 
 export interface PropertyCreate {
-  name: string
-  state: string
-  municipality: string
+  name?: string | null
+  h3_token: string
 }
 
 export interface PropertyUpdate {
@@ -54,8 +53,9 @@ export interface Crop {
   name: string
   crop_type: string
   irrigation_system_type: string
+  irrigation_turn: number
   planting_date: string
-  area_planted_hectares: number | null
+  area_planted_hectares: number
   created_at: string
   updated_at: string
 }
@@ -65,28 +65,32 @@ export interface CropCreate {
   name: string
   crop_type: string
   irrigation_system_type: string
+  irrigation_turn?: number
   planting_date: string
-  area_planted_hectares?: number | null
+  area_planted_hectares: number
 }
 
 export interface CropUpdate {
   name?: string
   crop_type?: string
   irrigation_system_type?: string
+  irrigation_turn?: number
   planting_date?: string
-  area_planted_hectares?: number | null
+  area_planted_hectares?: number
 }
 
 export interface Calculation {
   id: string
+  calculated_at: string
+  h3_token: string
   etcrop_mm: number
+  irrigation_turn: number
   lamina_liquida_mm: number
   lamina_bruta_mm: number
   tempo_irrigacao_hours: number
   volume_total_liters: number
-  recommendation: string
-  status: 'latest' | 'historical'
-  calculated_at: string
+  climate_data_id: string
+  crop_id: string | null
 }
 
 // ── Properties ────────────────────────────────────────────────────────────

@@ -25,9 +25,9 @@ function PropertyCard({ property, onDelete }: { property: Property; onDelete: (p
               {property.name}
             </h2>
             <div className="flex items-center gap-1 mt-1 text-[var(--irr-on-surface-variant)]">
-              <span className="material-symbols-outlined text-[16px]">location_on</span>
-              <span className="text-[14px]">
-                {property.municipality}, {property.state}
+              <span className="material-symbols-outlined text-[16px]">hexagon</span>
+              <span className="text-[14px] font-mono">
+                {property.h3_token}
               </span>
             </div>
           </div>
@@ -40,10 +40,10 @@ function PropertyCard({ property, onDelete }: { property: Property; onDelete: (p
         <div className="mt-auto pt-4 border-t border-[var(--irr-surface-variant)] flex justify-between items-center pl-1">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--irr-on-surface-variant)] mb-1">
-              Localização
+              Token H3
             </p>
-            <p className="text-[20px] font-medium text-[var(--irr-primary)]">
-              {property.municipality}
+            <p className="text-[16px] font-mono font-medium text-[var(--irr-primary)]">
+              {property.h3_token}
             </p>
           </div>
           <div className="w-10 h-10 rounded-full border border-[var(--irr-outline-variant)] flex items-center justify-center group-hover:bg-[var(--irr-secondary-container)] group-hover:border-[var(--irr-secondary-container)] group-hover:text-[var(--irr-on-secondary-container)] transition-all text-[var(--irr-on-surface-variant)]">

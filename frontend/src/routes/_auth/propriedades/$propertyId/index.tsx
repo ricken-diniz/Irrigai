@@ -6,6 +6,7 @@ import DeleteConfirmDialog from '#/components/DeleteConfirmDialog'
 import EditPropertyDialog from '#/components/EditPropertyDialog'
 import { useDeleteProperty, useUpdateProperty } from '#/hooks/useProperties'
 import type { Crop } from '#/lib/api'
+import { CROP_LABEL_MAP } from '#/lib/constants'
 
 export const Route = createFileRoute('/_auth/propriedades/$propertyId/')({
   component: PropertyDetailPage,
@@ -52,7 +53,7 @@ function CropCard({ crop, propertyId }: { crop: Crop; propertyId: string }) {
               <span className="text-[18px] font-semibold text-[var(--irr-primary)] group-hover:text-[var(--irr-secondary)] transition-colors">
                 {crop.name}
               </span>
-              <p className="text-[14px] text-[var(--irr-on-surface-variant)]">{crop.crop_type}</p>
+              <p className="text-[14px] text-[var(--irr-on-surface-variant)]">{CROP_LABEL_MAP[crop.crop_type] ?? crop.crop_type}</p>
             </div>
           </div>
           <span className="material-symbols-outlined text-[var(--irr-outline-variant)] group-hover:text-[var(--irr-secondary)] transition-colors">
@@ -111,9 +112,9 @@ function PropertyDetailPage() {
           {property.name}
         </h1>
         <div className="flex items-center gap-1 text-[var(--irr-on-surface-variant)]">
-          <span className="material-symbols-outlined text-[16px]">location_on</span>
-          <span className="text-[14px]">
-            {property.municipality}, {property.state}
+          <span className="material-symbols-outlined text-[16px]">hexagon</span>
+          <span className="text-[14px] font-mono">
+            H3: {property.h3_token}
           </span>
         </div>
       </div>

@@ -20,6 +20,10 @@ from src.modules.calculation.repository import CalculationRepository
 from src.modules.calculation.service import CalculationService
 
 
+from src.modules.climate.repository import ClimateRepository
+from src.modules.climate.service import ClimateService
+
+
 router = APIRouter(
     prefix="/crops",
     tags=["Crops"],
@@ -28,7 +32,8 @@ router = APIRouter(
 
 def get_crop_service() -> CropService:
     property_service = PropertyService(PropertyRepository(prisma))
-    calculation_service = CalculationService(CalculationRepository(prisma))
+    climate_service = ClimateService(ClimateRepository(prisma))
+    calculation_service = CalculationService(CalculationRepository(prisma), climate_service)
     return CropService(CropRepository(prisma), property_service, calculation_service)
 
 

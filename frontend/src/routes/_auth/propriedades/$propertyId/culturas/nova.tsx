@@ -1,26 +1,7 @@
 import { useState } from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useCreateCrop } from '#/hooks/useCrops'
-
-const CROP_TYPES = [
-  { value: 'milho', label: 'Milho' },
-  { value: 'soja', label: 'Soja' },
-  { value: 'algodao', label: 'Algodão' },
-  { value: 'feijao', label: 'Feijão' },
-  { value: 'cafe', label: 'Café' },
-  { value: 'arroz', label: 'Arroz' },
-  { value: 'trigo', label: 'Trigo' },
-  { value: 'outro', label: 'Outro' },
-]
-
-const IRRIGATION_SYSTEMS = [
-  { value: 'gotejamento', label: 'Gotejamento' },
-  { value: 'aspersao', label: 'Aspersão' },
-  { value: 'microaspersao', label: 'Microaspersão' },
-  { value: 'pivo_central', label: 'Pivô Central' },
-  { value: 'sulcos', label: 'Sulcos' },
-  { value: 'inundacao', label: 'Inundação' },
-]
+import { CROP_TYPES, IRRIGATION_SYSTEMS } from '#/lib/constants'
 
 export const Route = createFileRoute('/_auth/propriedades/$propertyId/culturas/nova')({
   component: NovaCulturaPage,
@@ -37,6 +18,7 @@ function NovaCulturaPage() {
     name: '',
     crop_type: '',
     irrigation_system_type: '',
+    irrigation_turn: '1',
     planting_date: today,
     area_planted_hectares: '',
   })
@@ -55,16 +37,22 @@ function NovaCulturaPage() {
         name: form.name,
         crop_type: form.crop_type,
         irrigation_system_type: form.irrigation_system_type,
+        irrigation_turn: parseInt(form.irrigation_turn, 10) || 1,
         planting_date: new Date(form.planting_date).toISOString(),
-        area_planted_hectares: form.area_planted_hectares
-          ? parseFloat(form.area_planted_hectares)
-          : null,
+        area_planted_hectares: parseFloat(form.area_planted_hectares),
       })
       navigate({ to: '/propriedades/$propertyId', params: { propertyId } })
     } catch (err: any) {
       setError(err?.message ?? 'Erro ao cadastrar cultura.')
     }
   }
+
+  // Group irrigation systems by category for optgroup
+  const irrigationByCategory = IRRIGATION_SYSTEMS.reduce<Record<string, typeof IRRIGATION_SYSTEMS>>((acc, sys) => {
+    if (!acc[sys.category]) acc[sys.category] = []
+    acc[sys.category].push(sys)
+    return acc
+  }, {})
 
   return (
     <div className="w-full max-w-7xl mx-auto">
@@ -138,7 +126,7 @@ function NovaCulturaPage() {
             {/* Tipo de Cultura */}
             <div className="flex flex-col gap-1">
               <label className="text-[14px] text-[var(--irr-on-surface-variant)] font-semibold" htmlFor="crop_type">
-                Variedade da Cultura
+                Tipo de Cultura
               </label>
               <div className="relative">
                 <select
@@ -149,7 +137,7 @@ function NovaCulturaPage() {
                   required
                   className="w-full bg-[var(--irr-surface-container-lowest)] border border-[var(--irr-outline-variant)] rounded-lg px-4 py-3 text-[16px] text-[var(--irr-on-surface)] transition-all appearance-none focus:border-[var(--irr-mint)] focus:ring-1 focus:ring-[var(--irr-mint)] focus:outline-none"
                 >
-                  <option value="" disabled>Selecione uma variedade...</option>
+                  <option value="" disabled>Selecione uma cultura...</option>
                   {CROP_TYPES.map((c) => (
                     <option key={c.value} value={c.value}>{c.label}</option>
                   ))}
@@ -175,14 +163,37 @@ function NovaCulturaPage() {
                   className="w-full bg-[var(--irr-surface-container-lowest)] border border-[var(--irr-outline-variant)] rounded-lg px-4 py-3 text-[16px] text-[var(--irr-on-surface)] transition-all appearance-none focus:border-[var(--irr-mint)] focus:ring-1 focus:ring-[var(--irr-mint)] focus:outline-none"
                 >
                   <option value="" disabled>Selecione o sistema...</option>
-                  {IRRIGATION_SYSTEMS.map((s) => (
-                    <option key={s.value} value={s.value}>{s.label}</option>
+                  {Object.entries(irrigationByCategory).map(([category, systems]) => (
+                    <optgroup key={category} label={category}>
+                      {systems.map((s) => (
+                        <option key={s.value} value={s.value}>{s.label}</option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-[var(--irr-on-surface-variant)]">
                   <span className="material-symbols-outlined">expand_more</span>
                 </div>
               </div>
+            </div>
+
+            {/* Turno de Irrigação */}
+            <div className="flex flex-col gap-1">
+              <label className="text-[14px] text-[var(--irr-on-surface-variant)] font-semibold" htmlFor="irrigation_turn">
+                Turno de Irrigação (dias)
+              </label>
+              <input
+                id="irrigation_turn"
+                name="irrigation_turn"
+                type="number"
+                value={form.irrigation_turn}
+                onChange={handleChange}
+                min="1"
+                step="1"
+                required
+                className="w-full bg-[var(--irr-surface-container-lowest)] border border-[var(--irr-outline-variant)] rounded-lg px-4 py-3 text-[16px] text-[var(--irr-on-surface)] transition-all focus:border-[var(--irr-mint)] focus:ring-1 focus:ring-[var(--irr-mint)] focus:outline-none"
+              />
+              <p className="text-[12px] text-[var(--irr-outline)]">Intervalo em dias entre irrigações. Padrão: 1 dia.</p>
             </div>
 
             {/* Data + Área */}
@@ -214,8 +225,9 @@ function NovaCulturaPage() {
                     value={form.area_planted_hectares}
                     onChange={handleChange}
                     placeholder="0.00"
-                    min="0"
+                    min="0.01"
                     step="0.01"
+                    required
                     className="w-full bg-[var(--irr-surface-container-lowest)] border border-[var(--irr-outline-variant)] rounded-lg pl-4 pr-12 py-3 text-right text-[20px] font-medium text-[var(--irr-on-surface)] transition-all focus:border-[var(--irr-mint)] focus:ring-1 focus:ring-[var(--irr-mint)] focus:outline-none"
                   />
                   <div className="absolute right-0 pr-3 flex items-center pointer-events-none bg-[var(--irr-surface-container-low)] h-[calc(100%-2px)] rounded-r-lg border-l border-[var(--irr-outline-variant)] px-2">

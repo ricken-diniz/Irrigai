@@ -14,7 +14,7 @@ security = HTTPBearer()
 def get_jwks_client() -> PyJWKClient:
     return PyJWKClient(f"{settings.SUPABASE_URL}/auth/v1/.well-known/jwks.json")
 
-def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(security)) -> UUID:
+async def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(security)) -> UUID:
     token = credentials.credentials
     try:
         jwks_client = get_jwks_client()
@@ -33,6 +33,29 @@ def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(secu
         user_id: str = payload.get("sub")
         if user_id is None:
             raise HTTPException(status_code=401, detail="Invalid Token!")
+
+        # Upsert the user into the local database
+        from src.core.database import prisma
+        
+        email = payload.get("email", "")
+        # Supabase stores user metadata in user_metadata
+        user_metadata = payload.get("user_metadata", {})
+        name = user_metadata.get("full_name") or user_metadata.get("name") or "Usuário"
+        
+        await prisma.user.upsert(
+            where={"id": user_id},
+            data={
+                "create": {
+                    "id": user_id,
+                    "email": email,
+                    "name": name,
+                },
+                "update": {
+                    "email": email,
+                    "name": name,
+                }
+            }
+        )
 
         return user_id
 

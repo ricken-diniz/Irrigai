@@ -3,6 +3,7 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useCrop, useDeleteCrop, useUpdateCrop } from '#/hooks/useCrops'
 import DeleteConfirmDialog from '#/components/DeleteConfirmDialog'
 import EditCropDialog, { type EditCropData } from '#/components/EditCropDialog'
+import { CROP_LABEL_MAP, IRRIGATION_LABEL_MAP } from '#/lib/constants'
 
 export const Route = createFileRoute('/_auth/propriedades/$propertyId/culturas/$cropId/')({
   component: CropDetailPage,
@@ -27,8 +28,9 @@ function CropDetailPage() {
       name: data.name,
       crop_type: data.crop_type,
       irrigation_system_type: data.irrigation_system_type,
+      irrigation_turn: parseInt(data.irrigation_turn, 10) || 1,
       planting_date: new Date(data.planting_date).toISOString(),
-      area_planted_hectares: data.area_planted_hectares ? parseFloat(data.area_planted_hectares) : null,
+      area_planted_hectares: data.area_planted_hectares ? parseFloat(data.area_planted_hectares) : undefined,
     })
     setShowEdit(false)
   }
@@ -52,6 +54,9 @@ function CropDetailPage() {
   )
   const growthPercent = Math.min(Math.round((daysSincePlanting / 120) * 100), 100)
   const plantingDateFormatted = new Date(crop.planting_date).toLocaleDateString('pt-BR')
+
+  const cropLabel = CROP_LABEL_MAP[crop.crop_type] ?? crop.crop_type
+  const irrigationLabel = IRRIGATION_LABEL_MAP[crop.irrigation_system_type] ?? crop.irrigation_system_type
 
   const STAGE_LABELS: Record<number, string> = {
     0: 'Germinação',
@@ -81,7 +86,7 @@ function CropDetailPage() {
           {crop.name}
         </h1>
         <p className="text-[14px] text-[var(--irr-on-surface-variant)]">
-          Monitoramento de cultura e requerimentos hídricos.
+          {cropLabel} · Monitoramento de cultura e requerimentos hídricos.
         </p>
       </div>
 
@@ -141,8 +146,8 @@ function CropDetailPage() {
               <span className="material-symbols-outlined text-[20px]">grass</span>
               <span className="text-[14px]">Tipo</span>
             </div>
-            <span className="text-[16px] font-medium text-[var(--irr-on-surface)] capitalize">
-              {crop.crop_type}
+            <span className="text-[16px] font-medium text-[var(--irr-on-surface)]">
+              {cropLabel}
             </span>
           </div>
           <div className="bg-[var(--irr-surface-container-lowest)] rounded-xl border border-[var(--irr-outline-variant)] p-4 flex flex-col gap-1">
@@ -154,33 +159,43 @@ function CropDetailPage() {
               {plantingDateFormatted}
             </span>
           </div>
-          <div className="col-span-2 bg-[var(--irr-surface-container-lowest)] rounded-xl border border-[var(--irr-outline-variant)] p-4 flex justify-between items-center">
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-1 text-[var(--irr-on-surface-variant)]">
-                <span className="material-symbols-outlined text-[20px]">water_drop</span>
-                <span className="text-[14px]">Sistema de Irrigação</span>
-              </div>
-              <span className="text-[16px] font-medium text-[var(--irr-on-surface)] capitalize">
-                {crop.irrigation_system_type}
+          <div className="bg-[var(--irr-surface-container-lowest)] rounded-xl border border-[var(--irr-outline-variant)] p-4 flex flex-col gap-1">
+            <div className="flex items-center gap-1 text-[var(--irr-on-surface-variant)]">
+              <span className="material-symbols-outlined text-[20px]">water_drop</span>
+              <span className="text-[14px]">Sistema de Irrigação</span>
+            </div>
+            <span className="text-[16px] font-medium text-[var(--irr-on-surface)]">
+              {irrigationLabel}
+            </span>
+          </div>
+          <div className="bg-[var(--irr-surface-container-lowest)] rounded-xl border border-[var(--irr-outline-variant)] p-4 flex flex-col gap-1">
+            <div className="flex items-center gap-1 text-[var(--irr-on-surface-variant)]">
+              <span className="material-symbols-outlined text-[20px]">schedule</span>
+              <span className="text-[14px]">Turno de Irrigação</span>
+            </div>
+            <div className="flex items-baseline gap-1">
+              <span className="text-[20px] font-medium text-[var(--irr-on-surface)]">
+                {crop.irrigation_turn}
+              </span>
+              <span className="text-[14px] text-[var(--irr-on-surface-variant)]">
+                {crop.irrigation_turn === 1 ? 'dia' : 'dias'}
               </span>
             </div>
           </div>
-          {crop.area_planted_hectares != null && (
-            <div className="col-span-2 bg-[var(--irr-surface-container-lowest)] rounded-xl border border-[var(--irr-outline-variant)] p-4 flex justify-between items-center">
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-1 text-[var(--irr-on-surface-variant)]">
-                  <span className="material-symbols-outlined text-[20px]">straighten</span>
-                  <span className="text-[14px]">Área Plantada</span>
-                </div>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-[20px] font-medium text-[var(--irr-on-surface)]">
-                    {crop.area_planted_hectares}
-                  </span>
-                  <span className="text-[14px] text-[var(--irr-on-surface-variant)]">hectares</span>
-                </div>
+          <div className="col-span-2 bg-[var(--irr-surface-container-lowest)] rounded-xl border border-[var(--irr-outline-variant)] p-4 flex justify-between items-center">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-1 text-[var(--irr-on-surface-variant)]">
+                <span className="material-symbols-outlined text-[20px]">straighten</span>
+                <span className="text-[14px]">Área Plantada</span>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className="text-[20px] font-medium text-[var(--irr-on-surface)]">
+                  {crop.area_planted_hectares}
+                </span>
+                <span className="text-[14px] text-[var(--irr-on-surface-variant)]">hectares</span>
               </div>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Actions */}
@@ -219,8 +234,9 @@ function CropDetailPage() {
           name: crop.name,
           crop_type: crop.crop_type,
           irrigation_system_type: crop.irrigation_system_type,
+          irrigation_turn: String(crop.irrigation_turn),
           planting_date: crop.planting_date.split('T')[0],
-          area_planted_hectares: crop.area_planted_hectares ? String(crop.area_planted_hectares) : '',
+          area_planted_hectares: String(crop.area_planted_hectares),
         }}
         onClose={() => setShowEdit(false)}
         onSave={handleEdit}

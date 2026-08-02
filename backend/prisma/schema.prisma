@@ -86,8 +86,8 @@ model ClimateData {
 
   irrigation_calculations        Calculation[]
 
-  @@unique([s2_token, reference_month, reference_year])
-  @@index([s2_token])
+  @@unique([h3_token, reference_month, reference_year])
+  @@index([h3_token])
   @@map("climate_data")
 }
 

@@ -2,12 +2,6 @@ import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useCreateProperty } from '#/hooks/useProperties'
 
-const ESTADOS_BR = [
-  'AC','AL','AP','AM','BA','CE','DF','ES','GO','MA',
-  'MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN',
-  'RS','RO','RR','SC','SP','SE','TO',
-]
-
 export const Route = createFileRoute('/_auth/propriedades/nova')({
   component: NovaPropriedadePage,
 })
@@ -16,10 +10,10 @@ function NovaPropriedadePage() {
   const navigate = useNavigate()
   const createProperty = useCreateProperty()
 
-  const [form, setForm] = useState({ name: '', state: '', municipality: '' })
+  const [form, setForm] = useState({ name: '', h3_token: '' })
   const [error, setError] = useState<string | null>(null)
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
   }
 
@@ -27,12 +21,17 @@ function NovaPropriedadePage() {
     e.preventDefault()
     setError(null)
     try {
-      await createProperty.mutateAsync(form)
+      await createProperty.mutateAsync({
+        name: form.name || undefined,
+        h3_token: form.h3_token,
+      })
       navigate({ to: '/propriedades' })
     } catch (err: any) {
       setError(err?.message ?? 'Erro ao salvar propriedade.')
     }
   }
+
+  const isH3Valid = form.h3_token.length === 15
 
   return (
     <div className="w-full max-w-7xl mx-auto">
@@ -76,48 +75,51 @@ function NovaPropriedadePage() {
                 value={form.name}
                 onChange={handleChange}
                 placeholder="Ex: Fazenda Boa Esperança"
-                required
-                minLength={1}
                 maxLength={120}
                 className="w-full h-12 rounded-lg border border-[var(--irr-outline-variant)] bg-[var(--irr-surface-container-lowest)] px-3 text-[16px] text-[var(--irr-on-surface)] placeholder:text-[var(--irr-outline)] focus:outline-none focus:ring-2 focus:ring-[var(--irr-mint)] focus:border-transparent transition-colors"
               />
+              <p className="text-[12px] text-[var(--irr-outline)]">
+                Opcional. Um nome amigável para identificar a propriedade.
+              </p>
             </div>
 
-            {/* Estado + Município */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1">
-                <label className="text-[14px] font-semibold text-[var(--irr-on-surface)]" htmlFor="state">
-                  Estado
-                </label>
-                <select
-                  id="state"
-                  name="state"
-                  value={form.state}
-                  onChange={handleChange}
-                  required
-                  className="select-arrow w-full h-12 rounded-lg border border-[var(--irr-outline-variant)] bg-[var(--irr-surface-container-lowest)] px-3 text-[16px] text-[var(--irr-on-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--irr-mint)] focus:border-transparent transition-colors"
-                >
-                  <option value="" disabled>Selecione um estado</option>
-                  {ESTADOS_BR.map((uf) => (
-                    <option key={uf} value={uf}>{uf}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[14px] font-semibold text-[var(--irr-on-surface)]" htmlFor="municipality">
-                  Município
-                </label>
+            {/* Token H3 */}
+            <div className="flex flex-col gap-1">
+              <label className="text-[14px] font-semibold text-[var(--irr-on-surface)]" htmlFor="h3_token">
+                Token H3 de Localização
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="material-symbols-outlined text-[var(--irr-outline-variant)] text-[20px]">hexagon</span>
+                </span>
                 <input
-                  id="municipality"
-                  name="municipality"
+                  id="h3_token"
+                  name="h3_token"
                   type="text"
-                  value={form.municipality}
+                  value={form.h3_token}
                   onChange={handleChange}
-                  placeholder="Ex: Ribeirão Preto"
+                  placeholder="Ex: 8a1a10073ffffff"
                   required
-                  className="w-full h-12 rounded-lg border border-[var(--irr-outline-variant)] bg-[var(--irr-surface-container-lowest)] px-3 text-[16px] text-[var(--irr-on-surface)] placeholder:text-[var(--irr-outline)] focus:outline-none focus:ring-2 focus:ring-[var(--irr-mint)] focus:border-transparent transition-colors"
+                  minLength={15}
+                  maxLength={15}
+                  className="w-full h-12 rounded-lg border border-[var(--irr-outline-variant)] bg-[var(--irr-surface-container-lowest)] pl-10 pr-3 text-[16px] font-mono text-[var(--irr-on-surface)] placeholder:text-[var(--irr-outline)] focus:outline-none focus:ring-2 focus:ring-[var(--irr-mint)] focus:border-transparent transition-colors"
                 />
               </div>
+              <div className="flex items-center gap-2 mt-1">
+                {form.h3_token.length > 0 && (
+                  <span className={`text-[12px] font-medium ${isH3Valid ? 'text-[var(--irr-secondary)]' : 'text-[var(--irr-error)]'}`}>
+                    {form.h3_token.length}/15 caracteres
+                    {isH3Valid && (
+                      <span className="ml-1">
+                        <span className="material-symbols-outlined text-[14px] align-middle">check_circle</span>
+                      </span>
+                    )}
+                  </span>
+                )}
+              </div>
+              <p className="text-[12px] text-[var(--irr-outline)]">
+                Identificador hexagonal H3 com 15 caracteres. Futuramente selecionável via mapa.
+              </p>
             </div>
 
             {/* Map hint */}
@@ -128,8 +130,8 @@ function NovaPropriedadePage() {
               />
               <div className="relative z-10 flex flex-col items-center justify-center p-4 text-center">
                 <span className="material-symbols-outlined text-[var(--irr-outline)] text-[24px] mb-1">satellite_alt</span>
-                <p className="text-[14px] text-[var(--irr-on-surface-variant)] max-w-[200px]">
-                  A localização exata será configurada na próxima etapa.
+                <p className="text-[14px] text-[var(--irr-on-surface-variant)] max-w-[240px]">
+                  Em breve: seleção visual de localização via mapa com hexágonos H3.
                 </p>
               </div>
             </div>
@@ -146,7 +148,7 @@ function NovaPropriedadePage() {
             {/* Submit */}
             <button
               type="submit"
-              disabled={createProperty.isPending}
+              disabled={createProperty.isPending || !isH3Valid}
               className="w-full flex items-center justify-center gap-2 h-12 rounded-lg bg-[var(--irr-mint)] text-white text-[18px] font-semibold hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-60"
             >
               {createProperty.isPending ? (

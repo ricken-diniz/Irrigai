@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useCrop, useCropCalculation } from '#/hooks/useCrops'
+import { CROP_LABEL_MAP } from '#/lib/constants'
 
 export const Route = createFileRoute(
   '/_auth/propriedades/$propertyId/culturas/$cropId/recomendacao',
@@ -52,6 +53,8 @@ function RecomendacaoPage() {
   const { data: crop } = useCrop(cropId)
   const { data: calc, isLoading, isError, error } = useCropCalculation(cropId)
 
+  const cropLabel = crop ? (CROP_LABEL_MAP[crop.crop_type] ?? crop.crop_type) : ''
+
   return (
     <div className="w-full max-w-7xl mx-auto px-4 py-6">
       {/* Back link */}
@@ -69,7 +72,7 @@ function RecomendacaoPage() {
           Recomendação de Irrigação
         </h1>
         <p className="text-[14px] text-[var(--irr-on-surface-variant)] mt-1">
-          {crop?.name} · {crop?.crop_type}
+          {crop?.name} · {cropLabel}
         </p>
       </div>
 
@@ -114,7 +117,7 @@ function RecomendacaoPage() {
             </div>
             <div className="relative z-10">
               <p className="text-[11px] font-bold uppercase tracking-widest opacity-70 mb-2">
-                RECOMENDAÇÃO DE HOJE
+                LÂMINA BRUTA RECOMENDADA
               </p>
               <div className="flex items-end gap-2 mb-3">
                 <span className="text-[36px] font-bold leading-none">
@@ -122,7 +125,9 @@ function RecomendacaoPage() {
                 </span>
                 <span className="text-[18px] mb-1 opacity-80">mm</span>
               </div>
-              <p className="text-[14px] opacity-80">{calc.recommendation}</p>
+              <p className="text-[14px] opacity-80">
+                Irrigar {calc.lamina_bruta_mm?.toFixed(1)} mm com turno de {calc.irrigation_turn} {calc.irrigation_turn === 1 ? 'dia' : 'dias'}
+              </p>
             </div>
           </div>
 
@@ -158,7 +163,22 @@ function RecomendacaoPage() {
             />
           </div>
 
-          {/* Status */}
+          {/* Additional info */}
+          <div className="grid grid-cols-2 gap-4">
+            <MetricCard
+              icon="schedule"
+              label="Turno de Irrigação"
+              value={calc.irrigation_turn}
+              unit={calc.irrigation_turn === 1 ? 'dia' : 'dias'}
+            />
+            <MetricCard
+              icon="hexagon"
+              label="Token H3"
+              value={calc.h3_token}
+            />
+          </div>
+
+          {/* Timestamp */}
           <div className="flex items-center justify-between px-4 py-3 bg-[var(--irr-surface-container-lowest)] rounded-xl border border-[var(--irr-outline-variant)] text-[14px]">
             <div className="flex items-center gap-2 text-[var(--irr-on-surface-variant)]">
               <span className="material-symbols-outlined text-[18px]">update</span>
@@ -166,16 +186,6 @@ function RecomendacaoPage() {
                 Calculado em {new Date(calc.calculated_at).toLocaleString('pt-BR')}
               </span>
             </div>
-            <span
-              className={[
-                'text-[11px] font-bold uppercase tracking-widest px-2 py-1 rounded-full',
-                calc.status === 'latest'
-                  ? 'bg-[var(--irr-secondary-container)] text-[var(--irr-on-secondary-container)]'
-                  : 'bg-[var(--irr-surface-variant)] text-[var(--irr-on-surface-variant)]',
-              ].join(' ')}
-            >
-              {calc.status === 'latest' ? 'Atual' : 'Histórico'}
-            </span>
           </div>
         </div>
       )}

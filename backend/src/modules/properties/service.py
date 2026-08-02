@@ -2,21 +2,11 @@ from fastapi import HTTPException, status
 from src.modules.properties.repository import PropertyRepository
 from src.modules.properties.schemas import PropertyCreate, PropertyUpdate
 
-VALID_STATES = {
-    "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
-    "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
-    "RS", "RO", "RR", "SC", "SP", "SE", "TO"
-}
-
-
 class PropertyService:
     def __init__(self, repository: PropertyRepository):
         self.repository = repository
 
     async def create_property(self, user_id: str, payload: PropertyCreate):
-        if payload.state.upper() not in VALID_STATES:
-            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Estado inválido.")
-
         if await self.repository.exists_by_name(user_id, payload.name):
             raise HTTPException(status.HTTP_409_CONFLICT, "Você já tem uma propriedade com esse nome.")
 
